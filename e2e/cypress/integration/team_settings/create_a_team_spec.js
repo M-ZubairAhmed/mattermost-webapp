@@ -13,11 +13,21 @@
 import {getRandomId} from '../../utils';
 
 describe('Teams Suite', () => {
+    let testUser;
+    let testTeam;
+
     before(() => {
         // # Login as test user and visit town-square
-        cy.apiInitSetup({loginAfter: true}).then(({team}) => {
-            cy.visit(`/${team.name}/channels/town-square`);
+        cy.apiInitSetup({loginAfter: true}).then(({team, user}) => {
+            testTeam = team;
+            testUser = user;
+
+            cy.visit(`/${testTeam.name}/channels/town-square`);
         });
+    });
+
+    beforeEach(() => {
+        cy.apiLogin(testUser);
     });
 
     it('MM-T383 Create a new team', () => {
@@ -58,6 +68,25 @@ describe('Teams Suite', () => {
         tryReservedTeamURLAndVerifyError('oauth');
         tryReservedTeamURLAndVerifyError('error');
         tryReservedTeamURLAndVerifyError('help');
+    });
+
+    it('MM-T1669 Team icon shows active state on click', () => {
+        const newTeamName = `newteam${getRandomId(4)}`;
+
+        // # Open the team creation modal from the hamburger menu
+        openTeamCreationModalFromHamburgerMenu();
+
+        // # Input team name as Team Test
+        cy.get('#teamNameInput').should('be.visible').type(newTeamName);
+
+        // # Click Next button
+        cy.findByText('Next').should('be.visible').click();
+
+        // # Let the url be same and click finish button
+        cy.findByText('Finish').should('be.visible').click();
+
+        // # Go back to original team
+        cy.visit(`/${testTeam.name}/channels/town-square`);
     });
 });
 
